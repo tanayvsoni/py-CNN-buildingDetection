@@ -11,6 +11,8 @@ from torch.cuda.amp import autocast, GradScaler
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+import matplotlib.pyplot as plt
+
 
 class CustomDataset(Dataset):
     
@@ -36,7 +38,6 @@ class CustomDataset(Dataset):
             
         return image, label
 
-# Define your CNN architecture
 class CNNModel(nn.Module):
     def __init__(self):
         super(CNNModel, self).__init__()
@@ -58,23 +59,24 @@ class CNNModel(nn.Module):
         x = self.pool(torch.relu(self.conv4(x)))
         
         x = x.view(-1, 128 * 12 * 12)
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
+        x = nnF.leaky_relu(self.fc1(x))
+        x = nnF.leaky_relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
-    
 def train(device, train_dataloader):
     
     # Instantiate the model and move it to the device
     model = CNNModel().to(device)
+    model.load_state_dict(torch.load("./models/trained_model.pth"))
+    model.train()
     
     scaler = GradScaler()
     
     criterion = nn.MSELoss()  # Mean Squared Error loss
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
-    num_epochs = 10
+    num_epochs = 8
     
     model_path = "./models/trained_model.pth"
     
@@ -110,13 +112,15 @@ def train(device, train_dataloader):
 def test(device, test_dataloader):
     # Load the trained model for testing
     loaded_model = CNNModel().to(device)
-    loaded_model.load_state_dict(torch.load("./models/LOSS50_NORM_BEST/trained_model.pth"))
+    loaded_model.load_state_dict(torch.load("./models/BEST_LOSS16_NORM/trained_model.pth"))
     loaded_model.eval()  # Set the model to evaluation mode
 
-    threshold = 3  # Adjust this threshold based on your use case
+    # threshold = 1  # Adjust this threshold based on your use case
     
     correct_predictions = 0
     total_samples = 0
+    
+    correct_predicted_list = []
 
     with torch.no_grad():
         for batch_images, batch_labels in test_dataloader:
@@ -129,7 +133,11 @@ def test(device, test_dataloader):
             differences = torch.abs(outputs - batch_labels.view(-1, 1))
 
             # Count correct predictions based on the threshold
-            correct_predictions += torch.sum(differences <= threshold).item()
+            threshold = torch.where(batch_labels.view(-1, 1) * 0.05 > 1, batch_labels.view(-1, 1) * 0.05, 1)
+            
+            predictions = differences <= threshold
+            correct_predictions += torch.sum(predictions).item()
+            
             total_samples += batch_labels.size(0)
 
     accuracy = correct_predictions / total_samples * 100.0
@@ -142,7 +150,7 @@ def main():
     transform = transforms.Compose([
         transforms.Resize((1000, 1000)),  # Resize the images to a consistent size
         transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
     # Load image paths and labels from CSVq                                     
@@ -160,15 +168,15 @@ def main():
     train_dataset = CustomDataset(image_paths=train_image_paths, labels=train_labels, transform=transform)
     test_dataset = CustomDataset(image_paths=test_image_paths, labels=test_labels, transform=transform)
     
-    batch_size = 20
+    batch_size = 1
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.cuda.empty_cache()
     
-    train(device, train_dataloader)
-    #test(device, test_dataloader)
+    #train(device, train_dataloader)
+    test(device, test_dataloader)
     
     
 
