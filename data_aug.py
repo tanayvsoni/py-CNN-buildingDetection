@@ -28,7 +28,7 @@ def save_transformed_image(new_name, transformed_image, label):
     transformed_image.save(new_image_path)
     print(f"{new_name} Saved")
     
-    with open(data_file, 'a', newline='') as csv_file:
+    with open(new_csv, 'a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([new_name, label])
 
@@ -54,11 +54,11 @@ def process_image_row(row):
         new_image_names = new_image_names[1:]
 
 def main():
-    global input_folder, output_folder, num_transforms, num_rotations, data_file
+    global input_folder, output_folder, num_transforms, num_rotations, new_csv
 
     input_folder = './data/output'
     output_folder = './data/data_aug_out'
-    data_file = './data/new_image_data.csv'
+    new_csv = './data/new_image_data.csv'
     old_csv = './data/image_data.csv'
     num_transforms = 8
     num_rotations = 4
@@ -76,7 +76,6 @@ def main():
             thread.join()
 
     print("Image transformations and CSV update complete.")
-
 
 if __name__ == "__main__":
     main()

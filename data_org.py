@@ -3,6 +3,14 @@ import shutil
 from PIL import Image
 
 def resize_image(image_path, output_path):
+    """
+    Resize the input image to 1000x1000 without maintaining aspect ratio and save it.
+    
+    Args:
+        image_path (string): Path to the input image.
+        output_path (string): Path to save the resized image.
+    """
+    
     # Open the image file
     image = Image.open(image_path)
     
@@ -13,9 +21,9 @@ def resize_image(image_path, output_path):
     # Save the resized image
     resized_image.save(output_path)
 
-
 def org_files(data_directory):
-    """Prompts user to input image data and moves said image into zip file and stores
+    """
+    Prompts user to input image data and moves said image into zip file and stores
     relevent data into image_data.csv file.
 
     Args:
@@ -35,14 +43,11 @@ def org_files(data_directory):
         last_imgID += 1
         new_name = f'{last_imgID}.png'
         
+        # Resize the image and save it with the new name
         resize_image(f'{data_directory}/input/{img}',f'{data_directory}/input/{img}')
         
-        # Rename Image
-        os.rename(f'{data_directory}/input/{img}',f'{data_directory}/input/{new_name}')
-        
-        # Get relevent data
+        # Prompt the user for relevant data
         print(f'\nFor image {img} please enter relevent info:\n')
-                
         country_name = input('Enter name of country present in image: ').lower()
         num_building = input('Enter number of buildings present in image: ')
         comments = input('Any extra comments? Leave blank if none: ')
@@ -51,6 +56,7 @@ def org_files(data_directory):
         with open(f'{data_directory}/output/image_data.csv','a') as csvfile:
             csvfile.write(f'{new_name},{num_building},{country_name},{comments}\n')
         
+        # Move the new image to the output directory
         shutil.move(f'{data_directory}/input/{new_name}', f'{data_directory}/output/{new_name}')
  
 def main():
