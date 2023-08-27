@@ -187,7 +187,7 @@ def main():
     labels = data_df.iloc[:, 1].astype(int).tolist()
     
     # Manually split data into training and testing sets
-    split_ratio = 0.9  # 80% for training, 20% for testing
+    split_ratio = 0.9  # 90% for training, 10% for testing
     split_index = int(len(image_paths) * split_ratio)
     train_image_paths, test_image_paths = image_paths[:split_index], image_paths[split_index:]
     train_labels, test_labels = labels[:split_index], labels[split_index:]
