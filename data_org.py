@@ -31,7 +31,7 @@ def org_files(data_directory):
     """
     
     # Get last image ID that was used from csv file
-    with open(f'{data_directory}/output/image_data.csv','r') as csvfile:
+    with open(f'{data_directory}/image_data.csv','r') as csvfile:
         file = csvfile.read().splitlines()
         last_imgID = int(file[-1].split(',')[0][:-4])
         
@@ -53,7 +53,7 @@ def org_files(data_directory):
         comments = input('Any extra comments? Leave blank if none: ')
         
         # Write data input csv file    
-        with open(f'{data_directory}/output/image_data.csv','a') as csvfile:
+        with open(f'{data_directory}/image_data.csv','a') as csvfile:
             csvfile.write(f'{new_name},{num_building},{country_name},{comments}\n')
         
         # Move the new image to the output directory
