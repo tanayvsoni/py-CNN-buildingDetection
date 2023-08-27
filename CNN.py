@@ -13,10 +13,21 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import matplotlib.pyplot as plt
 
-
 class CustomDataset(Dataset):
+    """
+    Custom dataset class for loading and preprocessing images.
+    """
     
     def __init__(self, image_paths, labels, transform=None):
+        """
+        Constructor.
+        
+        Args:
+            image_paths (list): List of image file paths.
+            labels (list): List of corresponding labels.
+            transform (callable, optional): Transformation to apply to images.
+        """
+        
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform
@@ -39,13 +50,18 @@ class CustomDataset(Dataset):
         return image, label
 
 class CNNModel(nn.Module):
+    """
+    Definition of the Convolutional Neural Network model.
+    """
     def __init__(self):
         super(CNNModel, self).__init__()
+        
+        # Layers
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
         self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
         self.conv4 = nn.Conv2d(64, 128, 3, padding=1)
-        
+
         self.pool = nn.MaxPool2d(3, 3)
         
         self.fc1 = nn.Linear(128 * 12 * 12, 2048)   # Large intermediary layer
@@ -65,15 +81,22 @@ class CNNModel(nn.Module):
         return x
 
 def train(device, train_dataloader):
+    """
+    Training function.
+    
+    Args:
+        device (torch.device): Device to train the model on.
+        train_dataloader (DataLoader): DataLoader for the training dataset.
+    """
     
     # Instantiate the model and move it to the device
     model = CNNModel().to(device)
-    model.load_state_dict(torch.load("./models/trained_model.pth"))
+    model.load_state_dict(torch.load("./models/trained_model.pth"))     # Comment out if you want to train new model
     model.train()
     
     scaler = GradScaler()
     
-    criterion = nn.MSELoss()  # Mean Squared Error loss
+    criterion = nn.MSELoss()  # Mean Squared Error loss function
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     num_epochs = 8
@@ -110,17 +133,23 @@ def train(device, train_dataloader):
     print(f"Trained model saved at {model_path}")
 
 def test(device, test_dataloader):
+    """
+    Testing function.
+    
+    Args:
+        device (torch.device): Device to test the model on.
+        test_dataloader (DataLoader): DataLoader for the testing dataset.
+    """
+    
     # Load the trained model for testing
     loaded_model = CNNModel().to(device)
-    loaded_model.load_state_dict(torch.load("./models/BEST_LOSS16_NORM/trained_model.pth"))
+    loaded_model.load_state_dict(torch.load("./models/trained_model.pth"))      # Adjust which model you want to load
     loaded_model.eval()  # Set the model to evaluation mode
 
     # threshold = 1  # Adjust this threshold based on your use case
     
     correct_predictions = 0
     total_samples = 0
-    
-    correct_predicted_list = []
 
     with torch.no_grad():
         for batch_images, batch_labels in test_dataloader:
@@ -150,7 +179,6 @@ def main():
     transform = transforms.Compose([
         transforms.Resize((1000, 1000)),  # Resize the images to a consistent size
         transforms.ToTensor(),
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
     # Load image paths and labels from CSVq                                     
@@ -168,17 +196,17 @@ def main():
     train_dataset = CustomDataset(image_paths=train_image_paths, labels=train_labels, transform=transform)
     test_dataset = CustomDataset(image_paths=test_image_paths, labels=test_labels, transform=transform)
     
-    batch_size = 1
+    batch_size = 1  # Define Batch Size
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.cuda.empty_cache()
     
+    
+    # Comment out whichever function you dont need to use
     #train(device, train_dataloader)
     test(device, test_dataloader)
     
-    
-
 if __name__ == '__main__':
     main()
